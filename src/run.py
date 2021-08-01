@@ -1,14 +1,9 @@
-# This is a sample Python script.
+# Script que extrai dados do pdf e preenche a planilha do padrao Omie de lançamento de notas.
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+
 import io
 
 import openpyxl
-import pdfminer
-import requests
-
-import PyPDF2
 from PyPDF2 import PdfFileReader
 from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.layout import LAParams
@@ -16,13 +11,11 @@ from pdfminer.converter import TextConverter
 from io import StringIO
 from pdfminer.pdfpage import PDFPage
 
-import os
-
-from openpyxl import Workbook
-
-wb = openpyxl.load_workbook("/home/andre/Documentos/workspace/Python-Projects/pdf-to-omie/Omie_EXTRAIDO.xlsx")
-PDF_PATH = '/home/andre/Documentos/workspace/Python-Projects/pdf-to-omie/4500022260.pdf'  # MAXION.PDF, 4500022260.pdf
+WB = openpyxl.load_workbook("/home/andre/Documentos/workspace/Python-Projects/pdf-to-omie/Omie_EXTRAIDO.xlsx")
+PDF_PATH = '/home/andre/Documentos/workspace/Python-Projects/pdf-to-omie/MAXION.PDF'  # MAXION.PDF, 4500022260.pdf
 TXT_PATH = '/home/andre/Downloads/pdf_extraido.txt'
+CNPJ = ''
+NPC = ''
 
 
 def read_pdf(path):
@@ -44,14 +37,13 @@ def write_pdf_txt(path, pdf):
 
 
 def pdf_to_xlsx(wb, pdf):
-    sh1 = wb['Omie_Pedido_Venda']
     sh1 = wb.active
-    pedido = {"item": "", "Material": "", "Pedido de Compras": "",
-              "QTD": "", "Frete": "", "Preço": ""}
     row = sh1.max_row
-    p = 0
     r = 22
-    print(wb['Omie_Pedido_Venda'].cell(3, 17).value)
+    global CNPJ
+    #   print(wb['Omie_Pedido_Venda'].cell(3, 17).value)
+    sh1.cell(row=7, column=4, value=CNPJ)
+    CNPJ = ''
     for i in range(r, row + 1):
         for p in range(len(pdf)):
             for k in range(len(pdf[p])):
@@ -69,7 +61,7 @@ def pdf_to_xlsx(wb, pdf):
     wb.save("/home/andre/Documentos/workspace/Python-Projects/pdf-to-omie/Omie_EXTRAIDO.xlsx")
 
 
-def print_pdf_txt(path, pdf, wb):
+def print_pdf_txt(path, pdf, wb, cnpj):
     with open(path, mode="w"):
         ar = list()
         for page in pdf.pages:
@@ -80,7 +72,7 @@ def print_pdf_txt(path, pdf, wb):
                 ar.append(populate_pedidos(text[1]))
             else:
                 print("DESCARTADO \n")
-    pdf_to_xlsx(wb, ar)
+    pdf_to_xlsx(wb, ar, cnpj)
 
 
 def split_item_desc(st):
@@ -186,39 +178,55 @@ def get_pdf_miner_file(path, wb):
 
 def collect_pdf_data(lista):
     pedidos = list()
+    precos = list()
     n = 0
-    item =''
-    material = ''
-    qtd = ''
-    preco = ''
-    pedidocompra =''
+    global CNPJ
+    global NPC
     for i in lista:
+        if len(i) > 9:
+            if i[:9] == 'C.N.P.J.:' and CNPJ == '':
+                CNPJ = i[10:]
+        if len(i) == 10 and represent_int(i) and NPC == '':
+            NPC = i
         if len(i) == 17:
             i = i.split(" ")
             if len(i) == 2:
                 if represent_int(i[0]) and represent_int(i[1]):
-                    item= i[0]
-                    material = i[1]
-        elif len(i) == 10 and represent_int(i):
-            pedidocompra = i
-        elif "PEÇ" in i or (len(i) == 2 and "UN" in i):
-            i = i.split(" ")
-            qtd = i[0]
-            preco = i[1]
-        if item != '' and material != '' and qtd != '' and preco != '' and pedidocompra != '':
-            pedidos.append({"item": item, "Material": material, "Pedido de Compras": pedidocompra,"QTD": qtd, "Frete": "", "Preço": preco})
-            item = ''
-            material = ''
-            qtd = ''
-            preco = ''
-            pedidocompra = ''
+                    pedidos.append(create_item(i[0], i[1], NPC, '', '', False))
 
+        if ("PEÇ" in i or "UN" in i) and (8 <= len(i) <= 10):
+            i = i.split(" ")
+            precos.append(get_price_and_qtd(i[0], lista[n + 2]))
+        n += 1
+    pedidos = correct_price_and_qtd(pedidos, precos)
     return pedidos
 
+
+def correct_price_and_qtd(lista, incomplete):
+    for i in lista:
+        if not i["complete"] and len(incomplete) > 0:
+            i["QTD"] = incomplete[0]["QTD"]
+            i["Preço"] = incomplete[0]["Preço"]
+            incomplete.pop(0)
+    return lista
+
+
+def create_item(item, material, pedidocompra, qtd, preco, complete):
+    return {"item": item, "Material": material, "Pedido de Compras": pedidocompra, "QTD": qtd,
+            "Frete": "", "Preço": preco, "complete": complete};
+
+
+def get_price_and_qtd(qtd, preco):
+    return {"QTD": qtd, "Preço": preco};
+
+
+def is_complete(item, material, pedidocompra, qtd, preco):
+    if item != '' and material != '' and qtd != '' and preco != '' and pedidocompra != '':
+        return True
+    else:
+        return False
+
+
 if __name__ == '__main__':
-    # pdf = read_pdf(PDF_PATH)
-    get_pdf_miner_file(PDF_PATH, wb)
-    # write_pdf_txt(TXT_PATH,pdf)
-    # write_browser()
-    # print_pdf_txt(TXT_PATH, pdf, wb)
+    get_pdf_miner_file(PDF_PATH, WB)
     print("FIM!!")
