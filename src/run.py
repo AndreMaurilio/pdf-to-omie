@@ -2,6 +2,7 @@
 
 
 import io
+import os
 
 import openpyxl
 from PyPDF2 import PdfFileReader
@@ -11,21 +12,17 @@ from pdfminer.converter import TextConverter
 from io import StringIO
 from pdfminer.pdfpage import PDFPage
 
-WB = openpyxl.load_workbook("/home/andre/Documentos/workspace/Python-Projects/pdf-to-omie/Omie_EXTRAIDO.xlsx")
-PDF_PATH = '/home/andre/Documentos/workspace/Python-Projects/pdf-to-omie/MAXION.PDF'  # MAXION.PDF, 4500022260.pdf
-TXT_PATH = '/home/andre/Downloads/pdf_extraido.txt'
+WB = ''
+# WB = openpyxl.load_workbook("/home/andre/Documentos/workspace/Python-Projects/pdf-to-omie/Omie.xlsx")
+# PDF_PATH = '/home/andre/Documentos/workspace/Python-Projects/pdf-to-omie/MAXION.PDF'  # MAXION.PDF, 4500022260.pdf
+PDF_PATH = ''
 CNPJ = ''
 NPC = ''
 
 
 def read_pdf(path):
-    # Le o arquivo
     pdf = PdfFileReader(str(path))
-    # Printa o numero de paginas
     print(pdf.getNumPages())
-    # printa todos os textos
-    # for page in pdf.pages:
-    #     print(page.extractText(), end='\n')
     return pdf
 
 
@@ -58,81 +55,9 @@ def pdf_to_xlsx(wb, pdf):
             p += 1
         else:
             break
-    wb.save("/home/andre/Documentos/workspace/Python-Projects/pdf-to-omie/Omie_EXTRAIDO.xlsx")
+    wb.save("/home/andre/Documentos/workspace/Python-Projects/pdf-to-omie/EXTRAIDO.xlsx")
 
 
-def print_pdf_txt(path, pdf, wb, cnpj):
-    with open(path, mode="w"):
-        ar = list()
-        for page in pdf.pages:
-            text = page.extractText()
-            text = text.split(
-                "ItemDescrição MaterialPedido deCompras /Programa deremessaQUANT.UMPreçoUnitárioFreteUtilização do MaterialMoedaPreço TotalSaldoData de Entrega")
-            if (isinstance(text, list) and len(text) > 1):
-                ar.append(populate_pedidos(text[1]))
-            else:
-                print("DESCARTADO \n")
-    pdf_to_xlsx(wb, ar, cnpj)
-
-
-def split_item_desc(st):
-    n = 16
-    while (n + 16) < len(st):
-        if represent_int(st[n:n + 16]):
-            st = list(st)
-            st[n - 1] = '&'
-            st = ''.join(st)
-        n += 1;
-    v = st.split("&")
-    return v
-
-
-def populate_pedidos(lista):
-    lista = split_item_desc(lista)
-    pedidos = list()
-    if isinstance(lista, list):
-        for s in lista:
-            aux = s[0:16]
-            if (represent_int(aux) == True):
-                item = s[0:5]
-                material = s[5:16]
-                st = ""
-                n2 = 17
-                stop = False
-                for c in s[16:]:
-                    n = 0
-                    st = c
-                    for e in s[n2:]:
-
-                        if n == 9:
-                            if represent_int(st):
-                                pedidocompra = st
-                                stop = True
-                                break
-                            else:
-                                n = 0
-                                st = ""
-                                break
-                        st = st + e
-                        n += 1
-
-                    if stop:
-                        break
-                    n2 = n2 + 1
-
-                if "PEÇ" in s[n2:n2 + 30]:
-                    v = s[n2:].split("PEÇ")
-                else:
-                    v = s[n2:].split("UN")
-                qtd = v[0][9:]
-                if len(v) > 1:
-                    preco = v[1][:6]
-                else:
-                    preco = "nd"
-                pedidos.append({"item": item, "Material": material, "Pedido de Compras": pedidocompra,
-                                "QTD": qtd, "Frete": "", "Preço": preco})
-
-    return pedidos
 
 
 def represent_int(s):
@@ -142,22 +67,6 @@ def represent_int(s):
         return True
     except ValueError:
         return False
-
-
-def get_pdf_file(path, exc, wb):
-    resource_manager = PDFResourceManager(caching=True)
-    out_text = StringIO()
-    laParams = LAParams()
-    text_converter = TextConverter(resource_manager, out_text, laparams=laParams)
-    fp = open(path, 'rb')
-    interpreter = PDFPageInterpreter(resource_manager, text_converter)
-    for page in PDFPage.get_pages(fp, pagenos=set(), maxpages=0, password='', caching=True, check_extractable=True):
-        interpreter.process_page(page)
-    text = out_text.getvalue()
-    fp.close()
-    text_converter.close()
-    out_text.close()
-    return text
 
 
 def get_pdf_miner_file(path, wb):
@@ -220,13 +129,10 @@ def get_price_and_qtd(qtd, preco):
     return {"QTD": qtd, "Preço": preco};
 
 
-def is_complete(item, material, pedidocompra, qtd, preco):
-    if item != '' and material != '' and qtd != '' and preco != '' and pedidocompra != '':
-        return True
-    else:
-        return False
-
 
 if __name__ == '__main__':
+    WB = openpyxl.load_workbook(os.getcwd() + "/Omie.xlsx")
+    PDF_PATH = input('Insira o caminho do PDF:\n')
+    print('Aguarde...\n')
     get_pdf_miner_file(PDF_PATH, WB)
     print("FIM!!")
