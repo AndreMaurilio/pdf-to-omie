@@ -58,7 +58,7 @@ def pdf_to_xlsx(wb, pdf,address):
             p += 1
         else:
             break
-    wb.save("E:\EXTRAIDO_"+address+".xlsx")
+    wb.save(os.getcwd()+"\\xlsx\\"+address[:-4]+".xlsx")
 
 
 def represent_int(s):
@@ -131,16 +131,14 @@ def get_price_and_qtd(qtd, preco):
     return {"QTD": qtd, "Preço": preco};
 
 
-def pdf_to_omie_xls(path,pathomie,label):
+def pdf_to_omie_xlsx(path,pathomie,label):
     global WB, PDF_PATH
     PDF_PATH = path
     WB = openpyxl.load_workbook(pathomie)
     # print('Aguarde...\n')
-    label.setText('Aguarde...')
     get_pdf_miner_file(PDF_PATH, WB)
-    # print("FIM!!")
-    label.setText('Fim!!!')
-    time.sleep(5)
-    label.setText('Selecione um arquivo .PDF')
+        # print("FIM!!")
+    return "Fim!!"
+
 
 
