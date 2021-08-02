@@ -3,10 +3,13 @@
 
 import io
 import os
+import time
 
 import openpyxl
 from PyPDF2 import PdfFileReader
-from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
+from pdfminer.pdfinterp import PDFResourceManager
+from pdfminer.pdfinterp import PDFPageInterpreter
+from pdfminer.pdfparser import PDFParser
 from pdfminer.layout import LAParams
 from pdfminer.converter import TextConverter
 from io import StringIO
@@ -33,7 +36,7 @@ def write_pdf_txt(path, pdf):
             output_file.write(text)
 
 
-def pdf_to_xlsx(wb, pdf):
+def pdf_to_xlsx(wb, pdf,address):
     sh1 = wb.active
     row = sh1.max_row
     r = 22
@@ -55,9 +58,7 @@ def pdf_to_xlsx(wb, pdf):
             p += 1
         else:
             break
-    wb.save("/home/andre/Documentos/workspace/Python-Projects/pdf-to-omie/EXTRAIDO.xlsx")
-
-
+    wb.save("E:\EXTRAIDO_"+address+".xlsx")
 
 
 def represent_int(s):
@@ -82,7 +83,8 @@ def get_pdf_miner_file(path, wb):
     text = out_text.getvalue()
     text = text.split("\n")
     ar.append(collect_pdf_data(text))
-    pdf_to_xlsx(wb, ar)
+    address = path.split("/")[-1]
+    pdf_to_xlsx(wb, ar,address)
 
 
 def collect_pdf_data(lista):
@@ -129,10 +131,16 @@ def get_price_and_qtd(qtd, preco):
     return {"QTD": qtd, "Preço": preco};
 
 
-
-if __name__ == '__main__':
-    WB = openpyxl.load_workbook(os.getcwd() + "/Omie.xlsx")
-    PDF_PATH = input('Insira o caminho do PDF:\n')
-    print('Aguarde...\n')
+def pdf_to_omie_xls(path,pathomie,label):
+    global WB, PDF_PATH
+    PDF_PATH = path
+    WB = openpyxl.load_workbook(pathomie)
+    # print('Aguarde...\n')
+    label.setText('Aguarde...')
     get_pdf_miner_file(PDF_PATH, WB)
-    print("FIM!!")
+    # print("FIM!!")
+    label.setText('Fim!!!')
+    time.sleep(5)
+    label.setText('Selecione um arquivo .PDF')
+
+
