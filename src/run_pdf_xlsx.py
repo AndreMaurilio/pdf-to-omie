@@ -1,15 +1,11 @@
 # Script que extrai dados do pdf e preenche a planilha do padrao Omie de lançamento de notas.
 
 
-import io
 import os
-import time
 
 import openpyxl
-from PyPDF2 import PdfFileReader
 from pdfminer.pdfinterp import PDFResourceManager
 from pdfminer.pdfinterp import PDFPageInterpreter
-from pdfminer.pdfparser import PDFParser
 from pdfminer.layout import LAParams
 from pdfminer.converter import TextConverter
 from io import StringIO
@@ -21,12 +17,6 @@ WB = ''
 PDF_PATH = ''
 CNPJ = ''
 NPC = ''
-
-
-def read_pdf(path):
-    pdf = PdfFileReader(str(path))
-    print(pdf.getNumPages())
-    return pdf
 
 
 def write_pdf_txt(path, pdf):

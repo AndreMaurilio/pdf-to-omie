@@ -1,15 +1,11 @@
+# Executa GUI do aplicativo
 import os
 import sys
-import time
 
-from PyQt5.QtCore import QDir
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QFileSystemModel, QComboBox, QTreeView, \
-    QWidget, QLabel
-from PyQt5 import QtGui
-from PyQt5 import QtCore
-from win32comext.shell.demos.servers.shell_view import FileSystemView
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QFileSystemModel, QTreeView, QWidget,QLabel
 
-from src.run_pdf_xlsx import pdf_to_omie_xlsx
+
+from run_pdf_xlsx import pdf_to_omie_xlsx
 
 
 class Window(QMainWindow):
@@ -91,7 +87,6 @@ class Window(QMainWindow):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     dir_path = os.getcwd()
-    # j = Window()
     demo = Window(dir_path)
     demo.show
     sys.exit(app.exec())
