@@ -46,10 +46,7 @@ class Window(QMainWindow):
         self.label_1.resize(300, 25)
         self.label_1.setStyleSheet('QLabel {font:bold;font-size:15px;color:"blue"}')
 
-        # self.layout = QVBoxLayout(centralWidget)
-        # self.layout.addWidget(self.buttonload)
-        # self.layout.addWidget(self.tree)
-        # self.setLayout(self.layout)
+
 
         self.setup()
         self.load_window()
