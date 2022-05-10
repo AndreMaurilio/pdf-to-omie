@@ -35,9 +35,6 @@ def pdf_to_xlsx(wb, pdf, address):
     sh1.cell(row=7, column=4, value=CNPJ)
     sh1.cell(row=7, column=6, value="Suprimentos")
     sh1.cell(row=7, column=7, value="Para 21 dias ")
-    sh1.cell(row=7, column=10, value="Banco Bradesco")
-
-
     CNPJ = ''
 
     for i in range(r, row + 1):
