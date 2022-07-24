@@ -77,10 +77,67 @@ def get_pdf_miner_file(path, wb):
         interpreter.process_page(page)
     text = out_text.getvalue()
     text = text.split("\n")
-    ar.append(collect_pdf_data(text))
+    if 'Mercado Eletrônico' in text[0]:
+        ar.append(collect_mercado_eletronico_pdf(text))
+    else:
+        ar.append(collect_pdf_data(text))
     address = path.split("/")[-1]
     pdf_to_xlsx(wb, ar, address)
 
+def collect_mercado_eletronico_pdf(lista):
+    pedidos = list()
+    precos = list()
+    n = 0
+    global CNPJ
+    global NPC #Numero do pedido de compra
+    global COD
+    global QTD
+    global PRC
+    global UNID
+    global ITM
+    contador_unidade = False
+    item = 0
+    CNPJ = "61.156.113/0001-75"
+    UNID =''
+    PRECO = ''
+    n = 0
+    for i in lista:
+
+
+        if i == 'Pedido':
+            NPC = lista[n+1]
+
+
+        if '. - ' in i:
+            ITM = i.split('. - ')[0]
+            item += 1
+
+        if len(i) == 18 and represent_int(i):
+            COD = i[7:]
+            item += 1
+
+        if 'Quantidade'==i and len(i)== 10:
+            QTD = lista[n+4]
+            item += 1
+
+        if i == 'Preço Unitário':
+            PRECO = lista[n+2].split(' ')[1]
+            precos.append(PRECO)
+
+
+        if i == 'Unidade' and contador_unidade == False:
+            UNID = lista[n+2]
+            contador_unidade = True
+
+        if item == 3:
+            pedidos.append(create_item(ITM, COD, NPC, QTD, PRECO, False))
+            item = 0
+            contador_unidade = False
+            ITM, COD, QTD, PRECO, = '','','',''
+        n += 1
+    NPC = ''
+
+    return correct_price(pedidos,precos)
 
 def collect_pdf_data(lista):
     pedidos = list()
@@ -107,6 +164,13 @@ def collect_pdf_data(lista):
     pedidos = correct_price_and_qtd(pedidos, precos)
     NPC = ''
     return pedidos
+def correct_price(lista,preco):
+    n =0
+    for i in lista:
+        i["Preço"] = preco[n]
+        n += 1
+
+    return lista
 
 
 def correct_price_and_qtd(lista, incomplete):
